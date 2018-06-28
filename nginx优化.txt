@@ -1,17 +1,18 @@
 全局优化：
 	调整nginx主配置文件：
-		wroker_processes 2;  //与服务器cup核心数一致
+		wroker_processes 2;  //与服务器cup核心数一致或为它的倍数
 		wroker_connections 65535;  //调整每个wroker的最大并发访问数
-	调整liunx系统参数：
+		use epoll;  //使用epoll的I/O模型，用这个模型来高效处理异步事件
+	调整liunx系统参数：(linux系统默认为1024)
 		临时：ulimit -Hs 100000  //服务器本机本机最大文件打开数（硬限制）
 		      ulimit -Sn 100000	 //服务器本机本机最大文件打开数（软限制）
 http模块优化：
 	http{
 	  keepalive_timeout  10;   //保持连接的超时时间
 	  gzip on;		   //开启压缩	
-	  gzip_min_length 1000;	   //小文件不压缩
+	  gzip_min_length 1000;	   //小文件不压缩（最小容量1000个字节）
 	  gzip_comp_level 4;	   //压缩比率
-	  gzip_types gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;        //对特定文件压缩，类型参mime.types
+	  gzip_types gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;        //对特定文件压缩，类型参考nginx/conf/mime.types文件
 	  client_header_buffer_size 1k;    //默认请求包头信息的缓存
 	  large_client_header_buffers 4 4k;   //大请求包头部信息的缓存个数和容量  
 	  				       注：先根据client_header_buffer分配，如果容量不够再根据large分配。
@@ -19,11 +20,10 @@ http模块优化：
 	  注：(把静态文件放入缓存)如果需要打开大量的文件，则要保持这些文件的句柄为打开状态，避免后续再次打开，配置如下：
 	  open_file_cache	max=2000 inactive=20;	//设置服务器最大缓存2000个文件句柄，关闭20秒内无请求的文件句柄
 	  open_file_cache_valid 60s;	//文件句柄缓存有效时间为60s，60s后强制过期
-	  open_file_cache_min_uses 5;	//只有访问超过5次才会被缓存
+	  open_file_cache_min_uses 5;	//只有访问超过5次的文件才会被缓存
 	  open_file_cache_errors off;	
-	  注：客户端浏览器缓存数据设置
+	  注：设置客户数据缓存，提高二次访问时的访问速度
 	  location ~* \.(jpg|jpeg|gif|png|css|js|ico|xml)$ {
-		access_log  off;
 		expires     30d;	//定义客户端浏览器缓存的时间为30天【时间可调'秒（s）、分（m）、小时（h）、天（d）'】
 	}
 }
