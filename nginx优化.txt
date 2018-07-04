@@ -13,9 +13,6 @@ http模块优化：
 	  gzip_min_length 1000;	   //小文件不压缩（最小容量1000个字节）
 	  gzip_comp_level 4;	   //压缩比率
 	  gzip_types gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;        //对特定文件压缩，类型参考nginx/conf/mime.types文件
-	  client_header_buffer_size 1k;    //默认请求包头信息的缓存
-	  large_client_header_buffers 4 4k;   //大请求包头部信息的缓存个数和容量  
-	  				       注：先根据client_header_buffer分配，如果容量不够再根据large分配。
 	  
 	  注：(把静态文件放入缓存)如果需要打开大量的文件，则要保持这些文件的句柄为打开状态，避免后续再次打开，配置如下：
 	  open_file_cache	max=2000 inactive=20;	//设置服务器最大缓存2000个文件句柄，关闭20秒内无请求的文件句柄
@@ -27,3 +24,61 @@ http模块优化：
 		expires     30d;	//定义客户端浏览器缓存的时间为30天【时间可调'秒（s）、分（m）、小时（h）、天（d）'】
 	}
 }
+
+LNMP web平台安全优化配置
+nginx部分：
+	1.删除不必要的功能与模块	./configure --with-http_autoindex_module --without-http_ssi_module .....等
+	2.修该web软件版本信息，并隐藏具体的版本号：
+		(1)配置文件修改:	http { 
+						server_tokens off;
+						}
+		(2)源码包修改：		vim +48 src/http/ngx_http_header_filter_module.c
+						static u_char ngx_http_server_string[] = "Server: my http" CRLF;
+						static u_char ngx_http_server_full_string[] = "Server: my http " CRLF;
+						static u_char ngx_http_server_build_string[] = "Server: my http " CRLF	
+	3.限制并发量(主要用于防范DDos攻击):
+					http {
+					    ......
+					   limit_req_zone $binary_remote_addr zone=one:10M rate=1r/s;
+						server {
+						    limit_req zone=one burst=5;
+							}
+					}
+						//备注说明：
+							//limit_req_zone语法格式如下：
+							//limit_req_zone key zone=name:size rate=rate;
+							//上面案例中是将客户端IP信息存储名称为one的共享内存，内存空间为10M
+							//1M可以存储8千个IP信息，10M可以存储8万个主机连接的状态，容量可以根据需要任意调整
+							//每秒中仅接受1个请求，多余的放入漏斗
+							//漏斗超过5个则报错
+	4.拒绝非法的请求：
+					http {
+						server {
+						   if ($request_method !~ ^(GET|POST)$) {    //这里，!符号表示对正则取反，~符号是正则匹配符号
+							   return 444;    //如果用户使用非GET或POST方法访问网站，则retrun返回444的错误信息
+								}
+							}
+
+						}
+	5.防止buffer溢出：		http {
+					   client_body_buffer_size 1k;	      //body默认请求缓存
+					   client_header_buffer_size 1k;      //默认请求包头信息的缓存
+					   client_max_body_size 1k;		
+					   large_client_header_buffers 4 4k;   //大请求包头部信息的缓存个数和容量
+                                               			注：先根据client_header_buffer分配，如果容量不够再根据large分配。
+					}	
+mysql部分：
+	1.初始化安全脚本：  启动数据库后运行mysql_secure_installation脚本，清除mysql部分默认设置
+	2.密码安全：(1)文本界面修改密码:mysqladmin -uroot -predhat password 'mysql'可用history查看历史命令获取密码信息
+		    (2)登陆mysql中修改密码:set password for root@'localhost'=password('redhat') 可在当前家目录下查看.bash_history获取密码信息
+		    (3)5.6版本之前binlog日志中也可有明文密码
+	3.数据备份还原：数据库需备份多份。
+	4.数据安全：mysql数据传输需使用SSL加密
+
+
+
+
+
+
+
+
