@@ -4,7 +4,7 @@
 		wroker_connections 65535;  //调整每个wroker的最大并发访问数
 		use epoll;  //使用epoll的I/O模型，用这个模型来高效处理异步事件
 	调整liunx系统参数：(linux系统默认为1024)
-		临时：ulimit -Hs 100000  //服务器本机本机最大文件打开数（硬限制）
+		临时：ulimit -Hn 100000  //服务器本机本机最大文件打开数（硬限制）
 		      ulimit -Sn 100000	 //服务器本机本机最大文件打开数（软限制）
 http模块优化：
 	http{
