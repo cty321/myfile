@@ -8,12 +8,18 @@
 		      ulimit -Sn 100000	 //服务器本机本机最大文件打开数（软限制）
 http模块优化：
 	http{
+	  注：网站含有大量的静态文件，因此需要开启文件压缩，加速网页传输速度
 	  keepalive_timeout  10;   //保持连接的超时时间
 	  gzip on;		   //开启压缩	
 	  gzip_min_length 1000;	   //小文件不压缩（最小容量1000个字节）
 	  gzip_comp_level 4;	   //压缩比率
 	  gzip_types gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;        //对特定文件压缩，类型参考nginx/conf/mime.types文件
-	  
+	  注：配置Nginx支持PHP动态网站，因为有大量PHP脚本需要执行，因此还需要开启Nginx的各种fastcgi缓存，加速PHP脚本的执行速度。
+	  fastcgi_buffers 8 16k;                      //缓存php生成的页面内容，8个16k
+    	  fastcgi_buffer_size 32k;                    //缓存php生产的头部信息
+    	  fastcgi_connect_timeout 300;                //连接PHP的超时时间
+    	  fastcgi_send_timeout 300;                   //发送请求的超时时间
+    	  fastcgi_read_timeout 300;                   //读取请求的超时时间 
 	  注：(把静态文件放入缓存)如果需要打开大量的文件，则要保持这些文件的句柄为打开状态，避免后续再次打开，配置如下：
 	  open_file_cache	max=2000 inactive=20;	//设置服务器最大缓存2000个文件句柄，关闭20秒内无请求的文件句柄
 	  open_file_cache_valid 60s;	//文件句柄缓存有效时间为60s，60s后强制过期
