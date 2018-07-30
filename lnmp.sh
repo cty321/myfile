@@ -32,7 +32,7 @@ fi
 	systemctl start php-fpm
 	sleep 1
 	echo "安装完成。"
-	sed -i '65,68s/#//' /usr/local/nginx/conf/nginx.conf
+        sed -i '65,68s/#//' /usr/local/nginx/conf/nginx.conf
         sed -i '70,72s/#//' /usr/local/nginx/conf/nginx.conf
         sed -i '70s/\_params/\.conf/' /usr/local/nginx/conf/nginx.conf
 	sed -i '20c fastcgi_buffers 8 16k;' /usr/local/nginx/conf/nginx.conf
@@ -141,9 +141,9 @@ read -p "Input:" a
 
 case $a in
 1)
-	nginx2;;
-2)
 	nginx1;;
+2)
+	nginx2;;
 3)
 	tomcat;;
 4)
