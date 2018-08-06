@@ -3,7 +3,7 @@ if [ "$(yum repolist|awk '/^re/{print $2}')" -eq 0 ];then
 echo '
 [dvd]
 name=rhel7
-baseurl=ftp://192.168.2.254/rhel7
+baseurl=ftp://192.168.4.254/rhel7
 enable=1
 gpgcheck=0' > /etc/yum.repos.d/dvd.repo
 fi
@@ -115,6 +115,7 @@ EOF
 	sed -i "s/max_input_time = 60/max_input_time = 300/" /etc/php.ini
 	useradd -s /sbin/nologin zabbix
 	zabbix_server
+	systemctl restart php-fpm
 }
 
 zabbix2() {
@@ -130,12 +131,15 @@ zabbix2() {
 	cd misc/init.d/fedora/core
 	cp zabbix_agentd /etc/init.d/
 }
+while :
+do
 echo "
 	1.安装nginx服务器
 	2.安装nginx调度
 	3.安装tomcat-8
 	4.安装zabbix监控服务器
 	5.安装zabbix被控端
+	6.exit
 "
 read -p "Input:" a
 
@@ -150,9 +154,11 @@ case $a in
 	nginx1
 	zabbix1;;
 5)
-	zabbix2
+	zabbix2;;
+6)
+	exit
 esac
-
+done
 
 
 
